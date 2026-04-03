@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Ticketing System</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f6f8;
+            padding: 20px;
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        input, textarea {
+            width: 300px;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            background: white;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 5px solid #007bff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>Create Ticket</h2>
+
+<input id="name" placeholder="Your Name"><br><br>
+<textarea id="issue" placeholder="Describe your issue"></textarea><br><br>
+
+<button onclick="createTicket()">Submit</button>
+
+<h2>All Tickets</h2>
+<ul id="list"></ul>
+
+<script>
+
+async function createTicket() {
+    const name = document.getElementById("name").value;
+    const issue = document.getElementById("issue").value;
+
+    if (!name || !issue) {
+        alert("Enter both fields");
+        return;
+    }
+
+    try {
+        await fetch("http://127.0.0.1:5000/create", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({name, issue})
+        });
+
+        loadTickets();
+
+    } catch (error) {
+        console.error("Create Error:", error);
+    }
+}
+
+async function loadTickets() {
+    try {
+        const res = await fetch("http://127.0.0.1:5000/tickets");
+        const data = await res.json();
+
+        console.log("DATA:", data); // debug
+
+        const list = document.getElementById("list");
+        list.innerHTML = "";
+
+        if (data.length === 0) {
+            list.innerHTML = "<li>No tickets yet</li>";
+            return;
+        }
+
+        data.forEach(t => {
+            const li = document.createElement("li");
+
+            li.innerHTML = `
+                <strong>${t[1]}</strong><br>
+                ${t[2]}<br>
+                Category: ${t[3]} | Priority: <b>${t[4]}</b> | Status: ${t[5]}
+            `;
+
+            // priority colors
+            if (t[4] === "High") li.style.borderLeft = "5px solid red";
+            else if (t[4] === "Medium") li.style.borderLeft = "5px solid orange";
+            else li.style.borderLeft = "5px solid green";
+
+            list.appendChild(li);
+        });
+
+    } catch (error) {
+        console.error("Load Error:", error);
+    }
+}
+
+// load on start
+loadTickets();
+
+</script>
+
+</body>
+</html>
